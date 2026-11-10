@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VlogMe Free - make a narrated vlog from your clips</title>
+  <meta name="description" content="Free AI vlog maker. Upload clips, get a script and a narrated video. Runs in your browser with your own API keys.">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main>
+  <h1>VlogMe Free</h1>
+  <p class="lead">Upload your clips, get a script, and render a narrated video. Everything runs in your browser. Your keys and footage never touch our servers.</p>
+  <p class="note" id="disclosure"></p>
+
+  <section class="card" id="step-setup">
+    <h2>1. Your keys</h2>
+    <div class="grid">
+      <label>Gemini API key
+        <input id="geminiKey" type="password" autocomplete="off" spellcheck="false">
+        <small><a id="geminiLink" target="_blank" rel="noopener noreferrer">Get a free key</a> (Google AI Studio)</small>
+      </label>
+      <label>ElevenLabs API key
+        <input id="elevenKey" type="password" autocomplete="off" spellcheck="false">
+        <small id="elevenHelp"></small>
+      </label>
+    </div>
+    <label class="inline"><input id="remember" type="checkbox"> Remember my keys on this device (off = forgotten when you close the tab)</label>
+    <div class="row">
+      <button id="loadVoices" type="button">Load my voices</button>
+      <select id="voice"><option value="">Load voices first</option></select>
+    </div>
+    <details>
+      <summary>Advanced</summary>
+      <label>Gemini model <input id="geminiModel" type="text" value="gemini-2.5-flash"></label>
+    </details>
+    <div id="referral-setup"></div>
+  </section>
+
+  <section class="card" id="step-footage">
+    <h2>2. Your footage</h2>
+    <label>Video clips (up to 12 clips, about 800 MB total)
+      <input id="clips" type="file" accept="video/*" multiple>
+    </label>
+    <div class="grid">
+      <label>Shape
+        <select id="shape"><option value="landscape">Landscape 16:9</option><option value="portrait">Vertical 9:16</option></select>
+      </label>
+      <label>Tone
+        <select id="tone">
+          <option>Friendly and casual</option>
+          <option>Funny and playful</option>
+          <option>Calm and reflective</option>
+          <option>Energetic and upbeat</option>
+          <option>Informative and clear</option>
+        </select>
+      </label>
+      <label>Target length (seconds)
+        <input id="length" type="number" min="15" max="300" value="60">
+      </label>
+    </div>
+    <label>What is this vlog about? (optional)
+      <textarea id="topic" rows="3" placeholder="Weekend trip to the lake with friends..."></textarea>
+    </label>
+    <label>Background music (optional)
+      <input id="music" type="file" accept="audio/*">
+      <small>Need free music? <a id="musicLink" target="_blank" rel="noopener noreferrer">Browse Pixabay</a>. Check each track's license.</small>
+    </label>
+    <button id="analyze" type="button" class="primary">Analyze clips and write script</button>
+  </section>
+
+  <section class="card hidden" id="step-script">
+    <h2>3. Review your script</h2>
+    <label>Title <input id="title" type="text"></label>
+    <label>Description <textarea id="desc" rows="3"></textarea></label>
+    <div id="segments"></div>
+    <div id="referral-quota" class="hidden"></div>
+    <button id="render" type="button" class="primary">Generate voice and render video</button>
+  </section>
+
+  <section class="card hidden" id="step-result">
+    <h2>4. Your video</h2>
+    <video id="player" controls playsinline></video>
+    <div class="row">
+      <a id="dlVideo" class="button" download="vlog.mp4">Download video</a>
+      <a id="dlSrt" class="button" download="vlog.srt">Download captions (.srt)</a>
+    </div>
+  </section>
+
+  <section class="card" id="step-log">
+    <h2>Progress</h2>
+    <pre id="log" aria-live="polite"></pre>
+  </section>
+
+  <section class="card hidden" id="tools"><h2>Tools we like</h2><div id="tools-list"></div></section>
+  <section class="card hidden" id="more"><h2>More projects</h2><div id="more-list"></div></section>
+</main>
+
+<footer>
+  <p>Your keys are used only by your browser. A small low-resolution copy of each clip is sent to Google Gemini, and narration text is sent to ElevenLabs, under your own accounts.</p>
+  <p>Made by <a id="owner" target="_blank" rel="noopener noreferrer"></a></p>
+</footer>
+
+<script src="/vendor/ffmpeg/ffmpeg.js"></script>
+<script src="/vendor/util/index.js"></script>
+<script type="module" src="/app.js"></script>
+</body>
+</html>
