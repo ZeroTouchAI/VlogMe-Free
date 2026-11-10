@@ -1,0 +1,14 @@
+{
+  "name": "vlogme-free",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Free, browser-based AI vlog maker. Bring your own Gemini and ElevenLabs keys.",
+  "scripts": {
+    "build": "node scripts/copy-vendor.mjs"
+  },
+  "dependencies": {
+    "@ffmpeg/core": "0.12.6",
+    "@ffmpeg/ffmpeg": "0.12.10",
+    "@ffmpeg/util": "0.12.1"
+  }
+}
