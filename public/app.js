@@ -72,10 +72,14 @@ function loadSaved() {
 }
 function saveKeys() {
   try {
-    localStorage.clear();
-    sessionStorage.clear();
     const s = store();
-    for (const [id, k] of Object.entries(KEYS)) s.setItem(k, $(id).value.trim());
+    const other = s === localStorage ? sessionStorage : localStorage;
+    for (const [id, k] of Object.entries(KEYS)) {
+      other.removeItem(k);
+      const v = $(id).value.trim();
+      if (id === 'voice' && !v) continue; // keep the remembered voice until voices load
+      s.setItem(k, v);
+    }
   } catch { /* ignore */ }
 }
 
