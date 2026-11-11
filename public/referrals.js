@@ -6,9 +6,14 @@
 // Shown in the footer.
 export const OWNER = { name: 'ZeroTouchAI', url: 'https://github.com/ZeroTouchAI' };
 
-// Other projects. Leave empty and the section stays hidden.
-// { name: 'Project name', url: 'https://...', blurb: 'One line about it.' }
-export const MORE_PROJECTS = [];
+// "More from the makers" line in the footer. Leave empty and it stays hidden.
+// { name: 'Project name', url: 'https://...' }
+export const MORE_PROJECTS = [
+  { name: 'Carinly', url: 'https://carinly.com/?utm_source=higgsview&utm_medium=referral' },
+  { name: 'Effortless Social Media', url: 'https://effortlesssocialmedia.zerotouchai.com/?utm_source=higgsview&utm_medium=referral' },
+  { name: 'Effortless Cold Calling', url: 'https://effortlesscoldcalling.zerotouchai.com/?utm_source=higgsview&utm_medium=referral' },
+  { name: 'Effortless UGC', url: 'https://effortlessugc.netlify.app/?utm_source=higgsview&utm_medium=referral' },
+];
 
 // Plain (non-affiliate) helper links.
 export const LINKS = {

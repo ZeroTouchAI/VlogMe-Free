@@ -41,12 +41,12 @@ function initLinks() {
     tools.forEach((r) => $('tools-list').append(refCard(r, r.tools || '')));
   }
   if (MORE_PROJECTS.length) {
-    $('more').classList.remove('hidden');
-    MORE_PROJECTS.forEach((p) =>
-      $('more-list').append(
-        el('p', {}, el('a', { href: p.url, target: '_blank', rel: 'noopener noreferrer', text: p.name }), el('span', { text: p.blurb ? ' - ' + p.blurb : '' }))
-      )
-    );
+    $('makers').classList.remove('hidden');
+    const list = $('makers-list');
+    MORE_PROJECTS.forEach((p, i) => {
+      if (i) list.append(' \u00b7 ');
+      list.append(el('a', { href: p.url, target: '_blank', rel: 'noopener noreferrer', text: p.name }));
+    });
   }
 }
 function showQuotaReferral() {
