@@ -4,7 +4,7 @@
 // ---------------------------------------------------------------
 
 // Shown in the footer.
-export const OWNER = { name: 'ZeroTouchAI', url: 'https://github.com/ZeroTouchAI' };
+export const OWNER = { name: 'Zero Touch AI', url: 'https://zerotouchai.com' };
 
 // "More from the makers" line in the footer. Leave empty and it stays hidden.
 // { name: 'Project name', url: 'https://...' }

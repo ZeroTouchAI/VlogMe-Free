@@ -1,4 +1,6 @@
 import { OWNER, MORE_PROJECTS, LINKS, REFERRALS, DISCLOSURE } from './referrals.js';
+import { icon } from './icons.js';
+import { STYLES } from './styles-data.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...kids) => {
@@ -10,7 +12,12 @@ const el = (tag, attrs = {}, ...kids) => {
   kids.forEach((c) => n.append(c));
   return n;
 };
-const state = { ffmpeg: null, clips: [], moments: [], busy: false, lastUrls: [] };
+const state = { ffmpeg: null, clips: [], moments: [], busy: false, lastUrls: [], picked: [], style: 'general', format: 'horizontal' };
+const FORMATS = {
+  horizontal: { ratio: '16:9', use: 'YouTube (widescreen)', w: 30, h: 18, dims: [1280, 720] },
+  portrait: { ratio: '4:5', use: 'Instagram feed', w: 20, h: 25, dims: [720, 900] },
+  shorts: { ratio: '9:16', use: 'Shorts, Reels, TikTok', w: 16, h: 28, dims: [720, 1280] },
+};
 const LIMITS = { clips: 12, totalBytes: 800e6, proxyBytes: 14e6 };
 
 // ---------- referrals / links ----------
@@ -84,7 +91,7 @@ function saveKeys() {
 }
 
 // ---------- helpers ----------
-const log = (m) => { const l = $('log'); l.textContent += m + '\n'; l.scrollTop = l.scrollHeight; };
+const log = (m) => { const pt = $('progressText'); if (pt) pt.textContent = m; const l = $('log'); l.textContent += m + '\n'; l.scrollTop = l.scrollHeight; };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function extOf(name) { const m = /\.([a-z0-9]{2,4})$/i.exec(name); return m ? m[1].toLowerCase() : 'mp4'; }
 function toB64(u8) {
@@ -142,7 +149,7 @@ async function gemini(parts) {
 const ANALYZE_PROMPT = 'This is a low-resolution silent copy of one clip from a personal vlog. Return JSON: {"summary": string, "moments": [{"start": "MM:SS", "end": "MM:SS", "what": string}]}. Pick the 1 to 4 most interesting, non-overlapping moments, each 3 to 15 seconds long. Times must be inside the clip. "what" is one plain sentence describing what is visible.';
 
 async function analyze() {
-  const files = [...$('clips').files];
+  const files = [...state.picked];
   if (!$('geminiKey').value.trim()) throw new Error('Add your Gemini key first.');
   if (!files.length) throw new Error('Choose at least one video clip.');
   if (files.length > LIMITS.clips) throw new Error(`Please use ${LIMITS.clips} clips or fewer.`);
@@ -167,7 +174,7 @@ async function analyze() {
   log('Writing your script...');
   const catalog = state.moments.map((m) => `${m.id} | clip "${state.clips[m.clip].file.name}" ${fmt(m.start)}-${fmt(m.end)} | ${m.what}`).join('\n');
   const words = Math.round(Number($('length').value || 60) * 2.5);
-  const prompt = `You write narration for a personal vlog. Tone: ${$('tone').value}. Topic notes from the creator: ${$('topic').value.trim() || '(none)'}.\nAvailable moments:\n${catalog}\n\nReturn JSON: {"title": string, "description": string, "segments": [{"moment": string, "narration": string}]}.\nRules: first person, spoken style, about ${words} words of narration in total; use each moment at most once, in an order that tells a story; 1 to 3 sentences per segment; narration is only the words to be spoken (no emojis, no stage directions); only describe what the moment descriptions support.`;
+  const prompt = `You write narration for a personal vlog. Video style: ${STYLES[state.style].guide} Tone: ${$('tone').value}. Topic notes from the creator: ${$('topic').value.trim() || '(none)'}.\nAvailable moments:\n${catalog}\n\nReturn JSON: {"title": string, "description": string, "segments": [{"moment": string, "narration": string}]}.\nRules: first person, spoken style, about ${words} words of narration in total; use each moment at most once, in an order that tells a story; 1 to 3 sentences per segment; narration is only the words to be spoken (no emojis, no stage directions); only describe what the moment descriptions support.`;
   const plan = await gemini([{ text: prompt }]);
   const segs = (plan.segments || []).filter((s) => state.moments.some((m) => m.id === s.moment) && String(s.narration || '').trim());
   if (!segs.length) throw new Error('The script came back empty. Try again.');
@@ -175,7 +182,7 @@ async function analyze() {
   log('Script ready. Review it below, then render.');
 }
 function showPlan(title, desc, segs) {
-  $('title').value = title || '';
+  $('title').value = $('vName').value.trim() || title || '';
   $('desc').value = desc || '';
   const box = $('segments');
   box.replaceChildren();
@@ -251,7 +258,7 @@ async function render() {
   if (!$('elevenKey').value.trim()) throw new Error('Add your ElevenLabs key first.');
   saveKeys();
   const ff = await getFFmpeg();
-  const [W, H] = $('shape').value === 'portrait' ? [720, 1280] : [1280, 720];
+  const [W, H] = FORMATS[state.format].dims;
   const vf = `scale=${W}:${H}:force_original_aspect_ratio=decrease,pad=${W}:${H}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,tpad=stop_mode=clone:stop_duration=60`;
   const items = [];
   let list = '';
@@ -295,6 +302,68 @@ async function render() {
   log('Done! Download your video below.');
 }
 
+// ---------- page UI (design ported from VlogMe) ----------
+function drawStyles() {
+  $('styles').replaceChildren(...Object.entries(STYLES).map(([key, s]) => {
+    const tile = el('button', { type: 'button', class: 'tile-btn', 'aria-pressed': String(state.style === key) });
+    tile.style.background = `linear-gradient(160deg, hsl(${s.hue} 70% 45%), hsl(${(s.hue + 40) % 360} 65% 18%))`;
+    const img = el('img', { class: 'photo', src: `/styles/${key}.jpg`, alt: '' });
+    img.addEventListener('load', () => tile.classList.add('has-img'));
+    img.addEventListener('error', () => img.remove());
+    tile.append(img, el('span', { class: 'pic', 'aria-hidden': 'true', text: s.emoji }), el('span', { class: 'cap', text: s.label }));
+    tile.addEventListener('click', () => { state.style = key; drawStyles(); });
+    return tile;
+  }));
+  const label = STYLES[state.style].label;
+  $('inspire').href = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(label + ' vlog');
+  $('inspireText').textContent = `See what popular ${label} videos look like on YouTube.`;
+}
+function drawFormats() {
+  $('formats').replaceChildren(...Object.entries(FORMATS).map(([key, f]) => {
+    const shape = el('span', { class: 'shape' });
+    shape.style.width = f.w + 'px';
+    shape.style.height = f.h + 'px';
+    const b = el('button', { type: 'button', class: 'format', 'aria-pressed': String(state.format === key) }, shape, el('div', {}, el('b', { text: f.ratio }), el('small', { text: f.use })));
+    b.addEventListener('click', () => { state.format = key; drawFormats(); });
+    return b;
+  }));
+}
+function drawFiles() {
+  $('files').replaceChildren(...state.picked.map((f, i) => {
+    const rm = el('button', { type: 'button', class: 'x', 'aria-label': `Remove ${f.name}` });
+    rm.append(icon('x'));
+    rm.addEventListener('click', () => { state.picked.splice(i, 1); drawFiles(); });
+    return el('li', {}, el('span', { class: 'pos', text: String(i + 1) }), el('b', { class: 'fname', text: f.name }), el('small', { class: 'muted', text: (f.size / 1e6).toFixed(1) + ' MB' }), rm);
+  }));
+}
+function addFiles(list) {
+  for (const f of list) {
+    if (!/^video\//.test(f.type) && !/\.(mp4|mov|m4v|webm|mkv)$/i.test(f.name)) continue;
+    if (!state.picked.some((p) => p.name === f.name && p.size === f.size)) state.picked.push(f);
+  }
+  drawFiles();
+}
+function initUi() {
+  document.querySelectorAll('[data-icon]').forEach((n) => {
+    const svg = icon(n.dataset.icon);
+    n.tagName === 'I' ? n.replaceWith(svg) : n.append(svg);
+  });
+  drawStyles();
+  drawFormats();
+  const drop = $('drop'), input = $('clips');
+  drop.addEventListener('click', (e) => { if (e.target !== input) input.click(); });
+  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files); });
+  input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+  $('srcDevice').addEventListener('click', () => input.click());
+  document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => {
+    document.getElementById(b.dataset.go)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.side nav button').forEach((x) => x.classList.toggle('on', x === b));
+  }));
+}
+
 // ---------- wiring ----------
 function run(fn) {
   return async () => {
@@ -305,6 +374,7 @@ function run(fn) {
   };
 }
 initLinks();
+initUi();
 loadSaved();
 $('analyze').addEventListener('click', run(analyze));
 $('render').addEventListener('click', run(render));
