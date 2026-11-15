@@ -1,6 +1,7 @@
 import { OWNER, MORE_PROJECTS, LINKS, REFERRALS, DISCLOSURE } from './referrals.js';
 import { icon } from './icons.js';
 import { STYLES } from './styles-data.js';
+import { getUser, signIn, signOut, ensureToken, loadSettings, saveSettings, hasDrive } from './auth.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...kids) => {
@@ -12,7 +13,7 @@ const el = (tag, attrs = {}, ...kids) => {
   kids.forEach((c) => n.append(c));
   return n;
 };
-const state = { ffmpeg: null, clips: [], moments: [], busy: false, lastUrls: [], picked: [], style: 'general', format: 'horizontal' };
+const state = { ffmpeg: null, clips: [], moments: [], busy: false, lastUrls: [], picked: [], style: 'general', format: 'horizontal', pendingVoice: '' };
 const FORMATS = {
   horizontal: { ratio: '16:9', use: 'YouTube (widescreen)', w: 30, h: 18, dims: [1280, 720] },
   portrait: { ratio: '4:5', use: 'Instagram feed', w: 20, h: 25, dims: [720, 900] },
@@ -211,6 +212,7 @@ async function loadVoices() {
   sel.replaceChildren();
   (j.voices || []).forEach((v) => sel.append(el('option', { value: v.voice_id, text: v.name })));
   try { const saved = (state.keyStore || store()).getItem(KEYS.voice); if (saved) sel.value = saved; } catch { /* ignore */ }
+  if (state.pendingVoice && [...sel.options].some((o) => o.value === state.pendingVoice)) sel.value = state.pendingVoice;
   log(`Loaded ${sel.options.length} voices.`);
 }
 async function tts(text, prev, next) {
@@ -311,7 +313,7 @@ function drawStyles() {
     img.addEventListener('load', () => tile.classList.add('has-img'));
     img.addEventListener('error', () => img.remove());
     tile.append(img, el('span', { class: 'pic', 'aria-hidden': 'true', text: s.emoji }), el('span', { class: 'cap', text: s.label }));
-    tile.addEventListener('click', () => { state.style = key; drawStyles(); });
+    tile.addEventListener('click', () => { state.style = key; drawStyles(); queueSave(); });
     return tile;
   }));
   const label = STYLES[state.style].label;
@@ -324,7 +326,7 @@ function drawFormats() {
     shape.style.width = f.w + 'px';
     shape.style.height = f.h + 'px';
     const b = el('button', { type: 'button', class: 'format', 'aria-pressed': String(state.format === key) }, shape, el('div', {}, el('b', { text: f.ratio }), el('small', { text: f.use })));
-    b.addEventListener('click', () => { state.format = key; drawFormats(); });
+    b.addEventListener('click', () => { state.format = key; drawFormats(); queueSave(); });
     return b;
   }));
 }
@@ -364,6 +366,100 @@ function initUi() {
   }));
 }
 
+// ---------- sign-in (Google) and saved settings ----------
+function setSync(text, reconnect = false) {
+  $('syncState').textContent = text;
+  $('reconnect').hidden = !reconnect;
+}
+function collectSettings() {
+  // Only these fields are saved. API keys are never synced.
+  return { v: 1, style: state.style, format: state.format, tone: $('tone').value, length: $('length').value, geminiModel: $('geminiModel').value.trim(), voice: $('voice').value };
+}
+function applySettings(s) {
+  if (!s || typeof s !== 'object') return;
+  if (STYLES[s.style]) state.style = s.style;
+  if (FORMATS[s.format]) state.format = s.format;
+  if ([...$('tone').options].some((o) => o.value === s.tone)) $('tone').value = s.tone;
+  if (Number(s.length) >= 15 && Number(s.length) <= 300) $('length').value = s.length;
+  if (typeof s.geminiModel === 'string' && s.geminiModel) $('geminiModel').value = s.geminiModel;
+  if (typeof s.voice === 'string' && s.voice) { state.pendingVoice = s.voice; if ([...$('voice').options].some((o) => o.value === s.voice)) $('voice').value = s.voice; }
+  drawStyles();
+  drawFormats();
+}
+let saveTimer;
+function queueSave() {
+  if (!getUser() || !hasDrive()) return;
+  clearTimeout(saveTimer);
+  setSync('Saving...');
+  saveTimer = setTimeout(async () => {
+    try {
+      if (!(await ensureToken(false))) throw new Error('token');
+      await saveSettings(collectSettings());
+      setSync('Settings synced');
+    } catch { setSync('Reconnect Google to sync', true); }
+  }, 1200);
+}
+async function syncDown() {
+  if (!hasDrive()) { setSync('Sync off (Drive access not granted)'); return; }
+  try { applySettings(await loadSettings()); setSync('Settings synced'); }
+  catch { setSync('Sync unavailable'); }
+}
+function showApp(user) {
+  $('login').hidden = true;
+  $('app').hidden = false;
+  $('userName').textContent = user.name || user.email || 'Signed in';
+  const pic = $('userPic');
+  if (user.picture) { pic.src = user.picture; pic.hidden = false; } else pic.hidden = true;
+  $('userChip').hidden = false;
+}
+function showLogin() { $('app').hidden = true; $('login').hidden = false; }
+function clearKeys() {
+  try { for (const k of Object.values(KEYS)) { localStorage.removeItem(k); sessionStorage.removeItem(k); } } catch { /* ignore */ }
+  ['geminiKey', 'elevenKey'].forEach((id) => { $(id).value = ''; });
+  $('remember').checked = false;
+}
+function initLoginMedia() {
+  const login = $('login');
+  login.querySelectorAll('img').forEach((img) => {
+    const fail = () => { if (img.closest('.screen') && img.src.includes('login/')) img.src = 'hero.jpg'; else img.remove(); };
+    img.addEventListener('error', fail);
+    if (img.complete && !img.naturalWidth) fail();
+  });
+  const own = login.querySelector('.own-pile');
+  if (own) { const ok = () => own.parentElement.classList.add('own-clips'); if (own.complete && own.naturalWidth) ok(); else own.addEventListener('load', ok); }
+  login.querySelectorAll('[data-pos]').forEach((n) => { n.style.objectPosition = n.dataset.pos; });
+  login.querySelectorAll('[data-bg]').forEach((n) => { n.style.background = n.dataset.bg; });
+  const bg = new Image();
+  bg.onload = () => login.classList.add('own-bg');
+  bg.src = 'login/background.jpg';
+  const wave = $('wave');
+  if (wave && !wave.children.length) {
+    for (let i = 0; i < 48; i++) {
+      const b = document.createElement('i');
+      b.style.height = (18 + Math.abs(Math.sin(i * 0.7) * 60 + Math.sin(i * 0.23) * 20)).toFixed(0) + '%';
+      wave.append(b);
+    }
+  }
+}
+function initAuthUi() {
+  initLoginMedia();
+  $('googleBtn').addEventListener('click', async () => {
+    $('loginMsg').textContent = '';
+    $('googleBtn').disabled = true;
+    try { const u = await signIn(); showApp(u); syncDown(); }
+    catch (e) { $('loginMsg').textContent = e.message || 'Sign-in failed.'; }
+    finally { $('googleBtn').disabled = false; }
+  });
+  $('signOut').addEventListener('click', () => { signOut(); clearKeys(); $('userChip').hidden = true; showLogin(); });
+  $('reconnect').addEventListener('click', async () => { if (await ensureToken(true)) { setSync(''); syncDown(); } });
+  ['settingsCard'].forEach((id) => $(id).addEventListener('change', queueSave));
+  $('voice').addEventListener('change', queueSave);
+  $('geminiModel').addEventListener('change', queueSave);
+  const u = getUser();
+  if (u) { showApp(u); ensureToken(false).then((ok) => (ok ? syncDown() : setSync('Reconnect Google to sync', true))); }
+  else showLogin();
+}
+
 // ---------- wiring ----------
 function run(fn) {
   return async () => {
@@ -376,6 +472,7 @@ function run(fn) {
 initLinks();
 initUi();
 loadSaved();
+initAuthUi();
 $('analyze').addEventListener('click', run(analyze));
 $('render').addEventListener('click', run(render));
 $('loadVoices').addEventListener('click', run(loadVoices));

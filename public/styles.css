@@ -577,3 +577,15 @@ a.btn { text-decoration: none; display: inline-flex; align-items: center; gap: .
 #player { width: 100%; max-height: 70vh; background: #000; border-radius: 12px; }
 .site-foot { margin: 2rem 0 0; color: var(--muted); font-size: .84rem; display: grid; gap: .4rem; text-align: center; }
 .site-foot a { color: var(--orange); }
+
+/* ---- sign-in additions ---- */
+[hidden] { display: none !important; }
+.gbtn { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; gap: .7rem; width: 100%; font-weight: 600; margin: 1rem 0 .4rem; }
+.gbtn:hover { background: #f6f7f9; }
+.signin .fine { font-size: .78rem; margin-top: .8rem; }
+#loginMsg { color: #ff7b7b; min-height: 1.2em; margin: .2rem 0; }
+.user { display: flex; align-items: center; gap: .6rem; padding: .6rem .4rem; margin-bottom: .3rem; }
+.user img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.user b { display: block; font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+.user small { display: block; font-size: .74rem; }
+.linkbtn { background: none; border: 0; color: var(--orange); cursor: pointer; padding: 0; font: inherit; font-size: .76rem; text-decoration: underline; }

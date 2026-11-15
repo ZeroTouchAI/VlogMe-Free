@@ -33,3 +33,9 @@ Everything money- or owner-related is in [`public/referrals.js`](public/referral
 ## Status
 
 v0.1. Written without a browser test run: expect to debug the first deploy (ffmpeg.wasm loading, API CORS). See the console if a step fails.
+
+## Sign-in
+
+Google Sign-In only, with no database. The site uses Google's browser sign-in (`public/auth.js`) and saves each user's settings (style, format, tone, length, voice, model) to a hidden app-only folder in **their own** Google Drive (`drive.appdata` scope). API keys are never synced and are cleared from the browser on sign-out.
+
+The Google OAuth **Client ID** in `public/auth-config.js` is public by design. There is no client secret in this app. The login is a UI gate: processing runs in the user's browser with their own keys, so there is nothing of ours behind it.

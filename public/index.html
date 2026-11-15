@@ -12,7 +12,55 @@
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<div id="app">
+<div id="login" hidden>
+    <div class="pitch">
+      <div class="logo"><div class="mark" data-icon="play"></div><div><b>Vlog<em>Me</em></b></div></div>
+
+      <div class="story" aria-hidden="true">
+        <img class="own-pile" src="login/clips.png" alt="">
+        <div class="pile">
+          <div class="clip"><img src="hero.jpg" alt="" data-pos="12% 50%"><span>0:09</span></div>
+          <div class="clip"><img src="styles/cooking.jpg" alt=""><span>0:12</span></div>
+          <div class="clip"><img src="styles/lifestyle.jpg" alt=""><span>0:18</span></div>
+          <div class="clip"><img src="hero.jpg" alt="" data-pos="76% 40%"><span>0:07</span></div>
+          <div class="clip"><img src="styles/tutorial.jpg" alt=""><span>0:15</span></div>
+        </div>
+        <svg class="flow" viewBox="0 0 110 60" fill="none">
+          <defs><linearGradient id="flowGrad" x1="0" x2="1"><stop offset="0" stop-color="#ff2d78"/><stop offset="1" stop-color="#ff8a2b"/></linearGradient></defs>
+          <path d="M4 14 C 40 8, 56 46, 96 36" stroke="url(#flowGrad)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M82 22 L100 36 L80 48" stroke="#ff8a2b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="result">
+          <div class="frame"><div class="screen">
+            <img src="login/screen.jpg" alt="">
+            <span class="go" data-icon="play"></span>
+            <span class="tag">VlogMe</span>
+            <span class="caption">Another day, another adventure…</span>
+          </div></div>
+          <div class="wave" id="wave"></div>
+        </div>
+      </div>
+
+      <h1>You film it. <em>We make the vlog.</em></h1>
+      <p class="tag-line">Upload your clips. VlogMe writes the script, records the voice, and edits it all together.</p>
+      <div class="trio">
+        <div><span class="dot" data-bg="#ff2d9a" data-icon="doc"></span><div><b>Script</b><small>Turns your moments into a story.</small></div></div>
+        <div><span class="dot" data-bg="#ff8a2b" data-icon="mic"></span><div><b>Voice</b><small>Adds a natural, engaging narration.</small></div></div>
+        <div><span class="dot" data-bg="#8b5cf6" data-icon="wand"></span><div><b>Edit</b><small>Cuts, captions, adds music and more.</small></div></div>
+      </div>
+    </div>
+
+    <div class="signin">
+      <div class="logo"><div class="mark" data-icon="play"></div><div><b>Vlog<em>Me</em></b></div></div>
+      <h2>Welcome to VlogMe</h2>
+      <p>Sign in with Google to continue. It's free.</p>
+      <button type="button" class="btn big gbtn" id="googleBtn"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.1 5.5c4.3-4 6.9-9.9 6.9-16.9z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.3.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.1-5.5c-2 1.4-4.6 2.3-8.8 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continue with Google</button>
+      <p class="muted" id="loginMsg" role="alert"></p>
+      <p class="muted fine">VlogMe Free asks for your name, email and photo, plus a hidden app folder in your Google Drive to save your settings. It cannot see your other Drive files.</p>
+    </div>
+    <div class="powered">Powered by <a href="https://zerotouchai.com" target="_blank" rel="noopener">Zero Touch AI</a></div>
+  </div>
+<div id="app" hidden>
   <aside class="side">
     <div class="logo"><div class="mark" data-icon="play"></div><div><b>VlogMe</b><span>Free &middot; Your clips. AI videos.</span></div></div>
     <nav>
@@ -20,7 +68,11 @@
       <button type="button" data-go="create"><i data-icon="video"></i><span>Create a Video</span></button>
       <button type="button" data-go="keysCard"><i data-icon="settings"></i><span>My Keys</span></button>
     </nav>
-    <div class="side-foot"><button type="button" data-go="helpCard"><i data-icon="help"></i><span>Help &amp; Support</span></button></div>
+    <div class="side-foot">
+      <div class="user" id="userChip" hidden><img id="userPic" alt="" referrerpolicy="no-referrer" hidden><div><b id="userName"></b><small id="syncState" class="muted"></small><button type="button" class="linkbtn" id="reconnect" hidden>Reconnect Google</button></div></div>
+      <button type="button" data-go="helpCard"><i data-icon="help"></i><span>Help &amp; Support</span></button>
+      <button type="button" id="signOut"><i data-icon="user"></i><span>Sign out</span></button>
+    </div>
   </aside>
   <div class="main">
     <div class="topbar"><span class="tagline">You shoot. We edit.</span><span class="version">Free</span></div>
@@ -156,6 +208,7 @@
     </footer>
   </div>
 </div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/vendor/ffmpeg/ffmpeg.js"></script>
 <script src="/vendor/util/index.js"></script>
 <script type="module" src="/app.js"></script>
