@@ -7,12 +7,12 @@
 export const OWNER = { name: 'Zero Touch AI', url: 'https://zerotouchai.com' };
 
 // "More from the makers" line in the footer. Leave empty and it stays hidden.
-// { name: 'Project name', url: 'https://...' }
+// { name: 'Project name', url: 'https://...', blurb: 'One line about it.' }
 export const MORE_PROJECTS = [
-  { name: 'Carinly', url: 'https://carinly.com/?utm_source=higgsview&utm_medium=referral' },
-  { name: 'Effortless Social Media', url: 'https://effortlesssocialmedia.zerotouchai.com/?utm_source=higgsview&utm_medium=referral' },
-  { name: 'Effortless Cold Calling', url: 'https://effortlesscoldcalling.zerotouchai.com/?utm_source=higgsview&utm_medium=referral' },
-  { name: 'Effortless UGC', url: 'https://effortlessugc.netlify.app/?utm_source=higgsview&utm_medium=referral' },
+  { name: 'Carinly', url: 'https://carinly.com/?utm_source=higgsview&utm_medium=referral', blurb: 'A private app for long distance couples: messages translated as they arrive, shared clocks, games and visit planning.' },
+  { name: 'Effortless Social Media', url: 'https://effortlesssocialmedia.zerotouchai.com/?utm_source=higgsview&utm_medium=referral', blurb: 'Social media on autopilot. AI finds and creates on-brand content, you approve it, and it posts for you.' },
+  { name: 'Effortless Cold Calling', url: 'https://effortlesscoldcalling.zerotouchai.com/?utm_source=higgsview&utm_medium=referral', blurb: 'AI agents call and qualify leads for you, then flag the interested ones so you can follow up.' },
+  { name: 'Effortless UGC', url: 'https://effortlessugc.netlify.app/?utm_source=higgsview&utm_medium=referral', blurb: 'Turn one product photo into an on-brand, UGC-style ad shot in about a minute.' },
 ];
 
 // Plain (non-affiliate) helper links.

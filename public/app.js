@@ -50,6 +50,16 @@ function initLinks() {
   }
   if (MORE_PROJECTS.length) {
     $('makers').classList.remove('hidden');
+    $('moreCard').classList.remove('hidden');
+    $('loginMakers').classList.remove('hidden');
+    MORE_PROJECTS.forEach((p) => {
+      $('more-grid').append(el('a', { class: 'more-tile', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, el('b', { text: p.name }), el('span', { class: 'muted', text: p.blurb || '' }), el('span', { class: 'go', text: 'Visit \u2192' })));
+    });
+    const ll = $('login-makers-list');
+    MORE_PROJECTS.forEach((p, i) => {
+      if (i) ll.append(' \u00b7 ');
+      ll.append(el('a', { href: p.url, target: '_blank', rel: 'noopener noreferrer', text: p.name }));
+    });
     const list = $('makers-list');
     MORE_PROJECTS.forEach((p, i) => {
       if (i) list.append(' \u00b7 ');
